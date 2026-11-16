@@ -1,0 +1,81 @@
+# Illustrative multi-tier BOM for a datacenter GPU board.
+#
+# Every lead time, probability and delay below is an ILLUSTRATIVE ASSUMPTION,
+# loosely shaped by public reporting on GPU supply chains (tight HBM supply,
+# limited advanced-packaging capacity). None of it is real supplier data.
+#
+# Units are weeks. Each part's own work takes a triangular(min, mode, max)
+# duration and can only start once everything in `needs` has finished.
+# `disruption` adds `delay_weeks` with probability `p` (a capacity crunch,
+# a yield problem, an allocation cut).
+
+target_weeks: 30          # launch-ready date the program has committed to
+root: launch_ready
+
+parts:
+  gpu_die:
+    name: GPU die (leading-edge foundry)
+    tier: 3
+    lead_time: [14, 16, 20]
+    disruption: {p: 0.05, delay_weeks: 4}
+
+  hbm_stacks:
+    name: HBM memory stacks
+    tier: 3
+    lead_time: [10, 12, 18]
+    disruption: {p: 0.15, delay_weeks: 6}
+
+  interposer_substrate:
+    name: Silicon interposer and package substrate
+    tier: 3
+    lead_time: [8, 10, 14]
+    disruption: {p: 0.10, delay_weeks: 4}
+
+  advanced_packaging:
+    name: Advanced packaging (CoWoS-class 2.5D)
+    tier: 2
+    needs: [gpu_die, hbm_stacks, interposer_substrate]
+    lead_time: [4, 6, 9]
+    disruption: {p: 0.20, delay_weeks: 6}
+
+  package_test:
+    name: Package test and binning
+    tier: 2
+    needs: [advanced_packaging]
+    lead_time: [1, 2, 3]
+
+  pcb:
+    name: Board PCB (high layer count)
+    tier: 2
+    lead_time: [4, 6, 8]
+    disruption: {p: 0.05, delay_weeks: 2}
+
+  power_stages:
+    name: VRM and power stages
+    tier: 2
+    lead_time: [6, 8, 12]
+    disruption: {p: 0.10, delay_weeks: 4}
+
+  thermal:
+    name: Thermal solution (cold plate / heatsink)
+    tier: 2
+    lead_time: [5, 6, 8]
+
+  board_assembly:
+    name: Board assembly (SMT)
+    tier: 1
+    needs: [package_test, pcb, power_stages, thermal]
+    lead_time: [1, 2, 3]
+
+  board_test:
+    name: Board test and burn-in
+    tier: 1
+    needs: [board_assembly]
+    lead_time: [1, 2, 3]
+    disruption: {p: 0.05, delay_weeks: 2}
+
+  launch_ready:
+    name: Launch ready
+    tier: 0
+    needs: [board_test]
+    lead_time: [0, 0, 0]

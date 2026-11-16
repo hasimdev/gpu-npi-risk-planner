@@ -1,0 +1,8 @@
+numpy>=1.26
+pyyaml>=6.0
+fastapi>=0.110
+uvicorn>=0.29
+httpx>=0.27
+pytest>=8.0
+# Optional, for the GPU path. Pick the wheel that matches your CUDA version:
+# cupy-cuda12x
